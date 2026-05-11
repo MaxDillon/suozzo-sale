@@ -1,26 +1,26 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
 
-const allFiles = import.meta.glob('../../public/items/**/*', { eager: true });
+const allFiles = import.meta.glob("../../public/items/**/*", { eager: true });
 
 type Item = { folder: string; thumbnail: string; images: string[] };
 const folderMap = new Map<string, Item>();
 
 for (const rawPath in allFiles) {
-  const path = rawPath as string;
-  const parts = path.split('/');
-  const folder = parts[parts.length - 2];
-  const imgPath = `/items/${folder}/${parts[parts.length - 1]}`;
+    const path = rawPath as string;
+    const parts = path.split("/");
+    const folder = parts[parts.length - 2];
+    const imgPath = `/items/${folder}/${parts[parts.length - 1]}`;
 
-  if (!folderMap.has(folder)) {
-    folderMap.set(folder, { folder, thumbnail: '', images: [] });
-  }
+    if (!folderMap.has(folder)) {
+        folderMap.set(folder, { folder, thumbnail: "", images: [] });
+    }
 
-  const item = folderMap.get(folder)!;
-  item.images.push(imgPath);
-  if (!item.thumbnail || imgPath < item.thumbnail) {
-    item.thumbnail = imgPath;
-  }
+    const item = folderMap.get(folder)!;
+    item.images.push(imgPath);
+    if (!item.thumbnail || imgPath < item.thumbnail) {
+        item.thumbnail = imgPath;
+    }
 }
 
 const items = [...folderMap.values()];
@@ -33,22 +33,37 @@ const items = [...folderMap.values()];
     </header>
     <main>
         <div class="grid">
-            {items.map((item) => (
-                <button class="card" data-images={JSON.stringify(item.images)}>
-                    <img src={item.thumbnail} alt="" loading="lazy" />
-                </button>
-            ))}
+            {
+                items.map((item) => (
+                    <button
+                        class="card"
+                        data-images={JSON.stringify(item.images)}
+                    >
+                        <img src={item.thumbnail} alt="" loading="lazy" />
+                    </button>
+                ))
+            }
         </div>
     </main>
 
     <div id="popover" class="popover hidden" role="dialog" aria-modal="true">
         <div class="popover-backdrop"></div>
         <div class="popover-inner">
-            <button id="popover-close" class="popover-close" aria-label="Close">×</button>
+            <button id="popover-close" class="popover-close" aria-label="Close"
+                >×</button
+            >
             <div class="popover-img-wrap">
-                <button id="popover-prev" class="popover-nav popover-prev" aria-label="Previous">‹</button>
+                <button
+                    id="popover-prev"
+                    class="popover-nav popover-prev"
+                    aria-label="Previous">‹</button
+                >
                 <img id="popover-img" src="" alt="" />
-                <button id="popover-next" class="popover-nav popover-next" aria-label="Next">›</button>
+                <button
+                    id="popover-next"
+                    class="popover-nav popover-next"
+                    aria-label="Next">›</button
+                >
             </div>
             <div id="popover-count" class="popover-count"></div>
         </div>
@@ -56,13 +71,13 @@ const items = [...folderMap.values()];
 </Layout>
 
 <script>
-    const popover = document.getElementById('popover')!;
-    const backdrop = popover.querySelector('.popover-backdrop') as HTMLElement;
-    const closeBtn = document.getElementById('popover-close')!;
-    const imgEl = document.getElementById('popover-img') as HTMLImageElement;
-    const prevBtn = document.getElementById('popover-prev')!;
-    const nextBtn = document.getElementById('popover-next')!;
-    const countEl = document.getElementById('popover-count')!;
+    const popover = document.getElementById("popover")!;
+    const backdrop = popover.querySelector(".popover-backdrop") as HTMLElement;
+    const closeBtn = document.getElementById("popover-close")!;
+    const imgEl = document.getElementById("popover-img") as HTMLImageElement;
+    const prevBtn = document.getElementById("popover-prev")!;
+    const nextBtn = document.getElementById("popover-next")!;
+    const countEl = document.getElementById("popover-count")!;
 
     let images: string[] = [];
     let idx = 0;
@@ -71,38 +86,54 @@ const items = [...folderMap.values()];
         images = imgs;
         idx = 0;
         updateImg();
-        popover.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+        popover.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
     }
 
     function closePopover() {
-        popover.classList.add('hidden');
-        document.body.style.overflow = '';
+        popover.classList.add("hidden");
+        document.body.style.overflow = "";
     }
 
     function updateImg() {
         imgEl.src = images[idx];
         countEl.textContent = `${idx + 1} / ${images.length}`;
-        prevBtn.toggleAttribute('disabled', idx === 0);
-        nextBtn.toggleAttribute('disabled', idx === images.length - 1);
+        prevBtn.toggleAttribute("disabled", idx === 0);
+        nextBtn.toggleAttribute("disabled", idx === images.length - 1);
     }
 
-    document.querySelectorAll<HTMLButtonElement>('.card').forEach(btn => {
-        btn.addEventListener('click', () => {
+    document.querySelectorAll<HTMLButtonElement>(".card").forEach((btn) => {
+        btn.addEventListener("click", () => {
             openPopover(JSON.parse(btn.dataset.images!));
         });
     });
 
-    closeBtn.addEventListener('click', closePopover);
-    backdrop.addEventListener('click', closePopover);
-    prevBtn.addEventListener('click', () => { if (idx > 0) { idx--; updateImg(); } });
-    nextBtn.addEventListener('click', () => { if (idx < images.length - 1) { idx++; updateImg(); } });
+    closeBtn.addEventListener("click", closePopover);
+    backdrop.addEventListener("click", closePopover);
+    prevBtn.addEventListener("click", () => {
+        if (idx > 0) {
+            idx--;
+            updateImg();
+        }
+    });
+    nextBtn.addEventListener("click", () => {
+        if (idx < images.length - 1) {
+            idx++;
+            updateImg();
+        }
+    });
 
-    document.addEventListener('keydown', (e) => {
-        if (popover.classList.contains('hidden')) return;
-        if (e.key === 'Escape') closePopover();
-        if (e.key === 'ArrowLeft' && idx > 0) { idx--; updateImg(); }
-        if (e.key === 'ArrowRight' && idx < images.length - 1) { idx++; updateImg(); }
+    document.addEventListener("keydown", (e) => {
+        if (popover.classList.contains("hidden")) return;
+        if (e.key === "Escape") closePopover();
+        if (e.key === "ArrowLeft" && idx > 0) {
+            idx--;
+            updateImg();
+        }
+        if (e.key === "ArrowRight" && idx < images.length - 1) {
+            idx++;
+            updateImg();
+        }
     });
 </script>
 
@@ -134,7 +165,7 @@ const items = [...folderMap.values()];
 
     .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
         gap: 0.75rem;
     }
 
@@ -200,7 +231,7 @@ const items = [...folderMap.values()];
         position: absolute;
         top: 1rem;
         right: 1rem;
-        background: rgba(255,255,255,0.15);
+        background: rgba(255, 255, 255, 0.15);
         color: #fff;
         border: none;
         font-size: 1.5rem;
@@ -213,14 +244,14 @@ const items = [...folderMap.values()];
     }
 
     .popover-close:hover {
-        background: rgba(255,255,255,0.3);
+        background: rgba(255, 255, 255, 0.3);
     }
 
     .popover-nav {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         color: #fff;
         border: none;
         font-size: 2rem;
@@ -233,7 +264,7 @@ const items = [...folderMap.values()];
     }
 
     .popover-nav:hover {
-        background: rgba(0,0,0,0.7);
+        background: rgba(0, 0, 0, 0.7);
     }
 
     .popover-nav:disabled {
@@ -256,7 +287,7 @@ const items = [...folderMap.values()];
         transform: translateX(-50%);
         color: #fff;
         font-size: 0.875rem;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         padding: 0.25rem 0.75rem;
         border-radius: 999px;
     }
