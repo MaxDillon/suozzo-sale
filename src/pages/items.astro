@@ -1,0 +1,278 @@
+---
+import { readdirSync } from "fs";
+import Layout from "../layouts/Layout.astro";
+
+const base = "/Users/maxdillon/Projects/tools/suozzo-sale/public/items";
+let folders: string[] = [];
+try {
+    folders = readdirSync(base);
+} catch {
+    folders = [];
+}
+
+const items = folders.map((folder) => {
+    const imgs = readdirSync(`${base}/${folder}`).sort();
+    return {
+        folder,
+        thumbnail: `/items/${folder}/${imgs[0]}`,
+        images: imgs.map((i) => `/items/${folder}/${i}`),
+    };
+});
+---
+
+<Layout>
+    <header>
+        <a href="/">← Back</a>
+        <span>Estate Sale</span>
+    </header>
+    <main>
+        <div class="grid">
+            {
+                items.map((item) => (
+                    <button
+                        class="card"
+                        data-images={JSON.stringify(item.images)}
+                    >
+                        <img src={item.thumbnail} alt="" loading="lazy" />
+                    </button>
+                ))
+            }
+        </div>
+    </main>
+
+<div id="popover" class="popover hidden" role="dialog" aria-modal="true">
+        <div class="popover-backdrop"></div>
+        <div class="popover-inner">
+            <button id="popover-close" class="popover-close" aria-label="Close">×</button>
+            <div class="popover-img-wrap">
+                <button id="popover-prev" class="popover-nav popover-prev" aria-label="Previous">‹</button>
+                <img id="popover-img" src="" alt="" />
+                <button id="popover-next" class="popover-nav popover-next" aria-label="Next">›</button>
+            </div>
+            <div id="popover-count" class="popover-count"></div>
+        </div>
+    </div>
+    </div>
+</Layout>
+
+<script>
+    const popover = document.getElementById("popover")!;
+    const backdrop = popover.querySelector(".popover-backdrop") as HTMLElement;
+    const closeBtn = document.getElementById("popover-close")!;
+    const imgEl = document.getElementById("popover-img") as HTMLImageElement;
+    const prevBtn = document.getElementById("popover-prev")!;
+    const nextBtn = document.getElementById("popover-next")!;
+    const countEl = document.getElementById("popover-count")!;
+
+    let images: string[] = [];
+    let idx = 0;
+
+    function openPopover(imgs: string[]) {
+        images = imgs;
+        idx = 0;
+        updateImg();
+        popover.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    }
+
+    function closePopover() {
+        popover.classList.add("hidden");
+        document.body.style.overflow = "";
+    }
+
+    function updateImg() {
+        imgEl.src = images[idx];
+        countEl.textContent = `${idx + 1} / ${images.length}`;
+        prevBtn.toggleAttribute("disabled", idx === 0);
+        nextBtn.toggleAttribute("disabled", idx === images.length - 1);
+    }
+
+    document.querySelectorAll<HTMLButtonElement>(".card").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const raw = btn.dataset.images!;
+            openPopover(JSON.parse(raw));
+        });
+    });
+
+    closeBtn.addEventListener("click", closePopover);
+    backdrop.addEventListener("click", closePopover);
+    prevBtn.addEventListener("click", () => {
+        if (idx > 0) {
+            idx--;
+            updateImg();
+        }
+    });
+    nextBtn.addEventListener("click", () => {
+        if (idx < images.length - 1) {
+            idx++;
+            updateImg();
+        }
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (popover.classList.contains("hidden")) return;
+        if (e.key === "Escape") closePopover();
+        if (e.key === "ArrowLeft" && idx > 0) {
+            idx--;
+            updateImg();
+        }
+        if (e.key === "ArrowRight" && idx < images.length - 1) {
+            idx++;
+            updateImg();
+        }
+    });
+</script>
+
+<style>
+    header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    header a {
+        color: #222;
+        text-decoration: none;
+    }
+
+    header a:hover {
+        text-decoration: underline;
+    }
+
+    header span {
+        font-size: 1.25rem;
+    }
+
+    main {
+        padding: 1rem;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .card {
+        display: block;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border-radius: 4px;
+        background: #eee;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    .card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .popover {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+    }
+
+    .popover-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+    }
+
+    .popover-inner {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .popover-img-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 90vw;
+        max-height: 90vh;
+    }
+
+    .popover-img-wrap img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 4px;
+    }
+
+    .popover-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border: none;
+        font-size: 1.5rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .popover-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+.popover-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        border: none;
+        font-size: 2rem;
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .popover-nav:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .popover-nav:disabled {
+        opacity: 0.3;
+        cursor: default;
+    }
+
+    .popover-prev {
+        left: 1rem;
+    }
+
+    .popover-next {
+        right: 1rem;
+    }
+
+    .popover-count {
+        position: absolute;
+        bottom: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        font-size: 0.875rem;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+    }
+</style>
